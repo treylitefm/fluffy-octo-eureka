@@ -68,51 +68,40 @@ def fetch_song_info(link):
     #contains left and right braces, then parse out song part and keep artist name?
 
     artists = tree.xpath('//*[contains(@class, "text_artist") or contains(@class, "featured_artists")]/a/text()')
-    _map_lyrics_to_artists(artists, tree)
+    artists = map(_cleanse, artists)
+    return _map_lyrics_to_artists(artists, tree)
 
-    return {'artists': {
-        'main': artists[0],
-        'features': artists[1:]
-        },
-        'lyrics': {}}
+def _map_lyrics_to_artists(artists, tree):
+    no_features = len(artists) is 1
+    artists = dict(zip(artists, [[] for i in range(len(artists))]))
+    lyrics = tree.xpath('//div[@class="lyrics"]/p//text()')
+    lyrics = map(_cleanse, lyrics)
+    lyrics = filter(lambda s: s and not s.isspace(), lyrics)
 
-#def _map_lyrics_to_artists(artists, tree):
-def _map_lyrics_to_artists(): #TODO: delete, dev declaration
-    #done = tree.xpath('//div[@class="lyrics"]/p//text()') TODO: uncomment
-    no_features = False
 
-    if (no_features):
-        print 'implement logic for giving all lyrics to main artist'
-    else:
-        print 'logic for giving lyrics to artists depending on verse\'s preceding artist tag'
-        with open('young.json') as data_file:
-            text = json.load(data_file)
-            lyrics = map(_cleanse, text['lyrics'])
-            lyrics = filter(lambda s: s and not s.isspace(), lyrics)
-
-        artists = {} 
-        artists[_cleanse(text['artists']['main'])] = []
-
-        for artist in text['artists']['features']:
-            artists[_cleanse(artist)] = []
-
-        print artists
+    if (no_features): #logic for giving all lyrics to main artist
+        current_artist = artists.keys()[0]
+        for snippet in lyrics:
+            if "[" not in snippet:
+                artists[current_artist].append(snippet)
+    else: #logic for giving lyrics to artists depending on verse\'s preceding artist tag
+        #print artists
 
         for snippet in lyrics:
             m = search('\[([\w\s]*:\s)?([\w\s\.\$]+)(.+\(([\w\.\s\$]*)\))?\]', snippet);
             try:
-                print m.group(2)
-                current_artist = m.group(2)
+                #print m.group(2)
+                current_artist = m.group(2) #TODO: account for cases where a verse is done by two artists, for example: guilty conscience and donkey milk
             except:
-                print snippet,'no match',current_artist, artists.get(current_artist)
+                #print snippet,'no match',current_artist, artists.get(current_artist)
                 if current_artist in artists:
                     artists[current_artist].append(snippet)
                 else:
-                    print "hmmmm, not a key:", current_artist
+                    #print "Not a key within artists dictionary: ", current_artist
+                    pass
                 pass
+    return artists
 
-        print 'success', artists, len(lyrics)
-        save(artists, 'output.json')
 
 
 def _cleanse(text):
@@ -127,7 +116,6 @@ def save(data, path):
 
 
 def main():
-    '''
     global url
     url = 'http://genius.com/'
 
@@ -135,16 +123,14 @@ def main():
     'http://genius.com/Odd-future-oldie-lyrics',
     'http://genius.com/Chaka-khan-through-the-fire-lyrics',
     'http://genius.com/Kanye-west-through-the-wire-lyrics',
-
     'http://genius.com/Eminem-guilty-conscience-lyrics',
     'http://genius.com/Tyler-the-creator-assmilk-lyrics'
     ]
     
+    print fetch_song_info(samples[2])
     #print fetch_songs_for_artist(url+'artists/Aaliyah/')
-    for i in samples:
-        print fetch_song_info(i)
-    '''
-    _map_lyrics_to_artists()
+    #for i in samples:
+     #   print fetch_song_info(i)
 
 if __name__ == "__main__":
     main()
