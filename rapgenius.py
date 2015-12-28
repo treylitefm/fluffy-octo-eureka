@@ -63,13 +63,32 @@ def fetch_song_info(link):
     page = requests.get(link)
     tree = html.fromstring(page.content)
 
-    results = tree.xpath('//p/text()[contains(.,"Verse")]')
-    #//*/text()[contains(., "Verse") or contains(., "Intro") or contains(., "Bridge") or contains(., "Outro") or contains(., "Hook") or contains(., "Interlude")]
-    #contains left and right braces, then parse out song part and keep artist name?
-
     artists = tree.xpath('//*[contains(@class, "text_artist") or contains(@class, "featured_artists")]/a/text()')
     artists = map(_cleanse, artists)
-    return _map_lyrics_to_artists(artists, tree)
+    artists = _map_lyrics_to_artists(artists, tree)
+
+    name = _get_song_name(tree)
+    views = _get_views(tree)
+    producers = _get_producers(tree)
+    writers = _get_writers(tree)
+    song_link = _get_song_link(tree)
+
+    #print "Name:",name
+    #print "Views:",views
+    #print "Producers:",producers
+    #print "Writers:",writers
+    #print "Song Link:",song_link
+    #print "Artists & Lyrics",artists
+
+    return {
+            "song_name": name,
+            "views": views,
+            "producers": producers,
+            "writers": writers,
+            "song_link": song_link,
+            "artists_lyrics": artists
+            }
+    
 
 def _map_lyrics_to_artists(artists, tree):
     no_features = len(artists) is 1
@@ -102,7 +121,32 @@ def _map_lyrics_to_artists(artists, tree):
                 pass
     return artists
 
+def _get_song_name(tree):
+    song_name = tree.xpath('//*[contains(@class,"text_title")]/text()')
+    song_name = map(_cleanse, song_name)
+    return song_name
 
+def _get_views(tree):
+    #views = tree.xpath('//*[contains(@class,"song_views")]/text()') 
+    #views is a pseudo-element so it is not attainable through conventional means
+    #TODO: find ways of scraping pseudo-element
+    #views = map(_cleanse, views)
+    return []
+
+def _get_producers(tree):
+    producers = tree.xpath('//*[contains(@class,"producer_artists")]/a/text()')
+    producers = map(_cleanse, producers)
+    return producers
+
+def _get_writers(tree):
+    writers = tree.xpath('//*[contains(@class,"writer_artists")]/a/text()')
+    writers =  map(_cleanse, writers)
+    return writers
+
+def _get_song_link(tree):
+    song_link = tree.xpath('//*[contains(@class, "audio_link")]/a/@href')
+    song_link = map(_cleanse, song_link)
+    return song_link
 
 def _cleanse(text):
     text = text.strip()
@@ -127,6 +171,7 @@ def main():
     'http://genius.com/Tyler-the-creator-assmilk-lyrics'
     ]
     
+    #save(fetch_song_info(samples[2]), 'dwag.json')
     print fetch_song_info(samples[2])
     #print fetch_songs_for_artist(url+'artists/Aaliyah/')
     #for i in samples:
