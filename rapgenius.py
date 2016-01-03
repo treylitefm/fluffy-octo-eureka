@@ -122,17 +122,20 @@ def _map_lyrics_to_artists(artists, tree):
 
         for snippet in lyrics:
             m = search('\[([\w\s]*:\s)?([\w\s\.\$]+)(.+\(([\w\.\s\$]*)\))?\]', snippet);
+            #print snippet
             try:
-                #print m.group(2)
+                #print 'Group:',m.group(2)
                 current_artist = m.group(2) #TODO: account for cases where a verse is done by two artists, for example: guilty conscience and donkey milk
             except:
-                #print snippet,'no match',current_artist, artists.get(current_artist)
-                if current_artist in artists:
-                    artists[current_artist].append(snippet)
-                else:
-                    #print "Not a key within artists dictionary: ", current_artist
+                #print snippet,'no match',current_artist, artists.get(current_artist),artists
+                for artist in artists.keys():
+                    if current_artist in artist:
+                        artists[artist].append(snippet)
+                        break
+                    else:
+                        #print "Not a key within artists dictionary: ", current_artist
+                        pass
                     pass
-                pass
     return artists
 
 def _get_song_name(tree):
@@ -221,9 +224,8 @@ def main():
     #print len(fetch_artists('artists.json'))
     #fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
     #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
-    print fetch_song_info(samples[-1])
-    #for track in samples:
-     #   _insert_all(fetch_song_info(track))
+    for track in samples:
+        _insert_all(fetch_song_info(track))
 
 
 if __name__ == "__main__":
