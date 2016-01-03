@@ -1,50 +1,39 @@
 import sqlite3
 
-conn = sqlite3.connect('genius.db')
+class Model:
+    """Class handling select and insert operations for scraper"""
+    db = None
+    db_name = None
 
-print "Opened database successfully"
+    def __init__(self, name):
+        self.db_name = name
+        self.db = sqlite3.connect(name)
 
-conn.execute('''CREATE TABLE songs
-        (id INT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL,
-        views NUMERIC,
-        song_link TEXT,
-        created_on DATETIME,
-        updated_on DATETIME);''')
+    def insert(self, table, **kwargs):
+        query_keys = '('
+        query_values = '('
 
-print "Table created successfully: songs"
+        for key,value in kwargs.iteritems():
+            query_keys += key+','
+            query_values += '\''+value+'\','
 
-conn.execute('''CREATE TABLE artists
-        (id INT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL,
-        created_on DATETIME,
-        updated_on DATETIME);''')
+        query_keys += 'created_on,updated_on)'
+        query_values += 'datetime(\'now\',\'-5 hour\'),datetime(\'now\',\'-5 hour\'));'
 
-print "Table created successfully: artists"
+        query = 'INSERT INTO '+\
+                table+' '+\
+                query_keys+' '+\
+                'VALUES '+\
+                query_values 
 
-conn.execute('''CREATE TABLE producers
-        (id INT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL,
-        created_on DATETIME,
-        updated_on DATETIME);''')
+        print query
+        return self.db.execute(query).lastrowid
+    '''
+    def select(self, table, limit=None, **kwargs):
+        return 'not yet implemented'
+        query = ''
+        print "Table:", table
+        print "Limit:", limit
 
-print "Table created successfully: producers"
-
-conn.execute('''CREATE TABLE writers
-        (id INT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL,
-        created_on DATETIME,
-        updated_on DATETIME);''')
-
-print "Table created successfully: writers"
-
-conn.execute('''CREATE TABLE lyrics
-        (id INT PRIMARY KEY NOT NULL,
-        artist INT NOT NULL,
-        snippet TEXT NOT NULL,
-        created_on DATETIME,
-        updated_on DATETIME);''')
-
-print "Table created successfully: lyrics"
-
-conn.close()
+        query += ' limit '+limit+';' if limit else ';'
+   '''

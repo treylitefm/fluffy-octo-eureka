@@ -4,12 +4,22 @@ import string
 import json
 from re import search
 
+from genius_model import Model
 
-def fetch_artists():
-    alpha = list(string.ascii_lowercase)
+def fetch_artists(path=None):
+    print 'Fetching artists'
     
+    try:
+        artists = load(path)['data']
+        print 'Loading artists from:',path
+        return artists
+    except:
+        pass
+
+    alpha = list(string.ascii_lowercase)
     links = []
     count = 0
+
     for letter in alpha:
         i = 1
         while True:
@@ -25,9 +35,13 @@ def fetch_artists():
             i += 1
             count += 1
 
+    print 'Total:',len(links)
     return links
+    
 
-def fetch_songs_for_artist(link):
+def fetch_songs_for_artist(link, path=None):
+    print 'Fetchings for artist link:',link
+
     artist_name = link.split('/')[-1]
 
     page = requests.get(link)
@@ -42,8 +56,8 @@ def fetch_songs_for_artist(link):
     i = 2
     count = 1
     while True:
-        print url+'artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+str(i)+'&pagination=true', count
-        page = requests.get(url+'artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+str(i)+'&pagination=true')
+        print url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+str(i)+'&pagination=true', count
+        page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+str(i)+'&pagination=true')
         tree = html.fromstring(page.content)
         results = tree.xpath('//a[contains(@class,"song_name")]/@href');
         if results:
@@ -86,7 +100,7 @@ def fetch_song_info(link):
             "producers": producers,
             "writers": writers,
             "song_link": song_link,
-            "artists_lyrics": artists
+            "artist_lyrics": artists
             }
     
 
@@ -153,15 +167,47 @@ def _cleanse(text):
     text = text.replace(",", "")
     return text.lower()
 
+def _insert_songs(data, model):
+    return model.insert('songs', name=''.join(data['song_name']), views=''.join(data['views']), song_link=''.join(data['song_link']))
+
+def _insert_artists(data, model):
+    for artist in data['artist_lyrics'].keys():
+        model.insert('artists', name=artist, song_id=data['song_id'])
+
+def _insert_producers(data, model):
+    for producer in data['producers']:
+        model.insert('producers', name=producer, song_id=data['song_id'])
+
+def _insert_writers(data, model):
+    for writer in data['writers']:
+        model.insert('writers', name=writer, song_id=data['song_id'])
+
+def _insert_lyrics(data, model):
+    for artist in data['artist_lyrics'].keys():
+        model.insert('lyrics', artist=artist, snippet=' '.join(data['artist_lyrics'][artist]), song_id=data['song_id'])
+
+def _insert_all(data):
+    m = Model('genius.db')
+    song_id = _insert_songs(data, m)
+    data['song_id'] = song_id
+    _insert_artists(data, m)
+    _insert_producers(data, m)
+    _insert_writers(data, m)
+    _insert_lyrics(data, m)
 
 def save(data, path):
     with open(path, 'w') as fp:
-        json.dump({'artists': data}, fp)
+        json.dump({'data': data}, fp)
+
+def load(path):
+    with open(path, 'r') as json_data:
+        return json.load(json_data)
+        
 
 
 def main():
     global url
-    url = 'http://genius.com/'
+    url = 'http://genius.com'
 
     samples = [
     'http://genius.com/Odd-future-oldie-lyrics',
@@ -170,12 +216,13 @@ def main():
     'http://genius.com/Eminem-guilty-conscience-lyrics',
     'http://genius.com/Tyler-the-creator-assmilk-lyrics'
     ]
-    
-    #save(fetch_song_info(samples[2]), 'dwag.json')
-    print fetch_song_info(samples[2])
-    #print fetch_songs_for_artist(url+'artists/Aaliyah/')
-    #for i in samples:
-     #   print fetch_song_info(i)
+
+    #print len(fetch_artists('artists.json'))
+    #fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
+    #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
+    for track in samples:
+        _insert_all(fetch_song_info(track))
+
 
 if __name__ == "__main__":
     main()
