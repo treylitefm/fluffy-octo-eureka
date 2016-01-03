@@ -165,6 +165,7 @@ def _get_song_link(tree):
 def _cleanse(text):
     text = text.strip()
     text = text.replace(",", "")
+    text = text.replace("'", "")
     return text.lower()
 
 def _insert_songs(data, model):
@@ -220,8 +221,9 @@ def main():
     #print len(fetch_artists('artists.json'))
     #fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
     #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
-    for track in samples:
-        _insert_all(fetch_song_info(track))
+    print fetch_song_info(samples[-1])
+    #for track in samples:
+     #   _insert_all(fetch_song_info(track))
 
 
 if __name__ == "__main__":

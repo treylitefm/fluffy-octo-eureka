@@ -27,7 +27,9 @@ class Model:
                 query_values 
 
         print query
-        return self.db.execute(query).lastrowid
+        id = str(self.db.execute(query).lastrowid)
+        self.db.commit()
+        return id
     '''
     def select(self, table, limit=None, **kwargs):
         return 'not yet implemented'
