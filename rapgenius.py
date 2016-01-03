@@ -11,7 +11,7 @@ def fetch_artists(path=None):
     
     try:
         artists = load(path)['data']
-        print 'Loading artists from:',path
+        print 'Loading artists from:', path
         return artists
     except:
         pass
@@ -23,7 +23,7 @@ def fetch_artists(path=None):
     for letter in alpha:
         i = 1
         while True:
-            full_url = url+'/artists-index/'+letter+'/all' + ('?page='+str(i) if i > 1 else '')
+            full_url = url+'/artists-index/'+letter+'/all' + ('?page='+_to_u_string(i) if i > 1 else '')
             page = requests.get(full_url)
             tree = html.fromstring(page.content)
             results = tree.xpath('//*[@class="artists_index_list"]//a/@href')
@@ -31,16 +31,16 @@ def fetch_artists(path=None):
                 links += results
             else:
                 break
-            print full_url,count
+            print full_url, count
             i += 1
             count += 1
 
-    print 'Total:',len(links)
+    print 'Total:', len(links)
     return links
     
 
 def fetch_songs_for_artist(link, path=None):
-    print 'Fetchings for artist link:',link
+    print 'Fetching songs for artist link:', link
 
     artist_name = link.split('/')[-1]
 
@@ -50,14 +50,15 @@ def fetch_songs_for_artist(link, path=None):
     match = tree.xpath('//form[contains(@id, edit_artist_)]/@id');
     numeric_id = match[0].split('_')[-1]
     
-    print artist_name, numeric_id
+    print 'Artists Name:', artist_name
+    print 'Artist Id:', numeric_id
 
     links = []
     i = 2
     count = 1
     while True:
-        print url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+str(i)+'&pagination=true', count
-        page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+str(i)+'&pagination=true')
+        print url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true', count
+        page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
         tree = html.fromstring(page.content)
         results = tree.xpath('//a[contains(@class,"song_name")]/@href');
         if results:
@@ -74,6 +75,7 @@ def fetch_song_info(link):
     link, name, artist, features, views, lyrics, produced by if present, written by if present, youtube link
     use artists and features to distribute verses
     '''
+    print 'Genius Link:', link
     page = requests.get(link)
     tree = html.fromstring(page.content)
 
@@ -87,12 +89,12 @@ def fetch_song_info(link):
     writers = _get_writers(tree)
     song_link = _get_song_link(tree)
 
-    #print "Name:",name
-    #print "Views:",views
-    #print "Producers:",producers
-    #print "Writers:",writers
-    #print "Song Link:",song_link
-    #print "Artists & Lyrics",artists
+    #print "Name:", name
+    #print "Views:", views
+    #print "Producers:", producers
+    #print "Writers:", writers
+    #print "Song Link:", song_link
+    #print "Artists & Lyrics", artists
 
     return {
             "song_name": name,
@@ -124,10 +126,10 @@ def _map_lyrics_to_artists(artists, tree):
             m = search('\[([\w\s]*:\s)?([\w\s\.\$]+)(.+\(([\w\.\s\$]*)\))?\]', snippet);
             #print snippet
             try:
-                #print 'Group:',m.group(2)
+                #print 'Group:', m.group(2)
                 current_artist = m.group(2) #TODO: account for cases where a verse is done by two artists, for example: guilty conscience and donkey milk
             except:
-                #print snippet,'no match',current_artist, artists.get(current_artist),artists
+                #print snippet, 'no match', current_artist, artists.get(current_artist), artists
                 for artist in artists.keys():
                     if current_artist in artist:
                         artists[artist].append(snippet)
@@ -171,6 +173,9 @@ def _cleanse(text):
     text = text.replace("'", "")
     return text.lower()
 
+def _to_u_string(text):
+    return ''.join(str(text)).encode('utf-8')
+
 def _insert_songs(data, model):
     return model.insert('songs', name=''.join(data['song_name']), views=''.join(data['views']), song_link=''.join(data['song_link']))
 
@@ -212,7 +217,7 @@ def load(path):
 def main():
     global url
     url = 'http://genius.com'
-
+    '''
     samples = [
     'http://genius.com/Odd-future-oldie-lyrics',
     'http://genius.com/Chaka-khan-through-the-fire-lyrics',
@@ -220,12 +225,21 @@ def main():
     'http://genius.com/Eminem-guilty-conscience-lyrics',
     'http://genius.com/Tyler-the-creator-assmilk-lyrics'
     ]
-
-    #print len(fetch_artists('artists.json'))
-    #fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
-    #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
     for track in samples:
         _insert_all(fetch_song_info(track))
+    '''
+    
+    '''artist_links = fetch_artists('artists.json')
+    for artist_link in artist_links:
+        song_links = fetch_songs_for_artist(artist_link)
+        for song_link in song_links:
+            info = fetch_song_info(song_link)
+            _insert_all(info)
+        return
+    '''
+    #print fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
+    #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
+    print fetch_song_info('http://genius.com/A-for-jer-lyrics')
 
 
 if __name__ == "__main__":
