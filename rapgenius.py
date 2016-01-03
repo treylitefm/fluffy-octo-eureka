@@ -112,6 +112,7 @@ def _map_lyrics_to_artists(artists, tree):
     lyrics = tree.xpath('//div[@class="lyrics"]/p//text()')
     lyrics = map(_cleanse, lyrics)
     lyrics = filter(lambda s: s and not s.isspace(), lyrics)
+    current_artist = None
 
 
     if (no_features): #logic for giving all lyrics to main artist
@@ -123,7 +124,7 @@ def _map_lyrics_to_artists(artists, tree):
         #print artists
 
         for snippet in lyrics:
-            m = search('\[([\w\s]*:\s)?([\w\s\.\$]+)(.+\(([\w\.\s\$]*)\))?\]', snippet);
+            m = search('\[([\w\s]*[:\/]\s)?([\w\s\.\$]+)(.+\(([\w\.\s\$]*)\))?\]', snippet);
             #print snippet
             try:
                 #print 'Group:', m.group(2)
@@ -131,13 +132,13 @@ def _map_lyrics_to_artists(artists, tree):
             except:
                 #print snippet, 'no match', current_artist, artists.get(current_artist), artists
                 for artist in artists.keys():
-                    if current_artist in artist:
-                        artists[artist].append(snippet)
-                        break
-                    else:
-                        #print "Not a key within artists dictionary: ", current_artist
-                        pass
-                    pass
+                    if current_artist is not None:
+                        if current_artist in artist:
+                            artists[artist].append(snippet)
+                            break
+                        else:
+                            #print "Not a key within artists dictionary: ", current_artist
+                            pass
     return artists
 
 def _get_song_name(tree):
@@ -228,18 +229,18 @@ def main():
     for track in samples:
         _insert_all(fetch_song_info(track))
     '''
-    
-    '''artist_links = fetch_artists('artists.json')
+
+    artist_links = fetch_artists('res/artists.json')
     for artist_link in artist_links:
         song_links = fetch_songs_for_artist(artist_link)
         for song_link in song_links:
             info = fetch_song_info(song_link)
             _insert_all(info)
-        return
-    '''
+    
     #print fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
     #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
-    print fetch_song_info('http://genius.com/A-for-jer-lyrics')
+    #print fetch_song_info('http://genius.com/A-for-jer-lyrics')
+    #print fetch_song_info('http://genius.com/Accurate--lyrics')
 
 
 if __name__ == "__main__":

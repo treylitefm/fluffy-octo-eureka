@@ -27,7 +27,7 @@ class Model:
                 query_values 
 
         query = query.encode('utf-8')
-        print query
+        #print query
 
         id = str(self.db.execute(query).lastrowid)
         self.db.commit()
