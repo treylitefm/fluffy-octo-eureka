@@ -10,28 +10,39 @@ class Model:
         self.db = sqlite3.connect(name)
 
     def insert(self, table, **kwargs):
-        query_keys = '('
-        query_values = '('
-
-        for key,value in kwargs.iteritems():
-            query_keys += key+','
-            query_values += '\''+value+'\','
-
+        query_keys = '(' + ','.join(kwargs.keys())
         query_keys += 'created_on,updated_on)'
-        query_values += 'datetime(\'now\',\'-5 hour\'),datetime(\'now\',\'-5 hour\'));'
+
+        query_values = ','.join(map(lambda val: '\''+val+'\'', kwargs.values()))
+        query_values += ',datetime(\'now\',\'-5 hour\'),datetime(\'now\',\'-5 hour\')'
+
+        where_conditions = ''
+        
+        for key,value in kwargs.iteritems():
+            print key,value
+            where_conditions += key + '=' + '\'' + value + '\' AND '
+
+        where_conditions = where_conditions[:where_conditions.rfind('\'')+1]
+
 
         query = 'INSERT INTO '+\
                 table+' '+\
                 query_keys+' '+\
-                'VALUES '+\
-                query_values 
+                'SELECT '+\
+                query_values+' '+\
+                'WHERE NOT EXISTS('+\
+                'SELECT 1 FROM '+\
+                table+' '+\
+                'WHERE '+\
+                where_conditions+\
+                ');'
 
         query = query.encode('utf-8')
-        #print query
-
-        id = str(self.db.execute(query).lastrowid)
-        self.db.commit()
-        return id
+        print query
+        return 'placeholder'
+        #id = str(self.db.execute(query).lastrowid)
+        #self.db.commit()
+        #return id
     '''
     def select(self, table, limit=None, **kwargs):
         return 'not yet implemented'
