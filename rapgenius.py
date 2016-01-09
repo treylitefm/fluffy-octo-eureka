@@ -3,6 +3,7 @@ import requests
 import string
 import json
 from re import search
+import time
 
 from genius_model import Model
 
@@ -181,6 +182,7 @@ def _insert_songs(data, model):
     return model.insert('songs', name=''.join(data['song_name']), views=''.join(data['views']), song_link=''.join(data['song_link']))
 
 def _insert_artists(data, model):
+    print '\n'.join(data['artist_lyrics'].keys())
     for artist in data['artist_lyrics'].keys():
         model.insert('artists', name=artist, song_id=data['song_id'])
 
@@ -216,9 +218,10 @@ def load(path):
 
 
 def main():
+    start_time = time.time()
+
     global url
     url = 'http://genius.com'
-    '''
     samples = [
     'http://genius.com/Odd-future-oldie-lyrics',
     'http://genius.com/Chaka-khan-through-the-fire-lyrics',
@@ -226,17 +229,21 @@ def main():
     'http://genius.com/Eminem-guilty-conscience-lyrics',
     'http://genius.com/Tyler-the-creator-assmilk-lyrics'
     ]
-    for track in samples:
-        _insert_all(fetch_song_info(track))
-    '''
+    _insert_all(fetch_song_info(samples[1]))
+    print samples[0]
+    #for track in samples:
+    #    _insert_all(fetch_song_info(track))
 
+    '''
     artist_links = fetch_artists('res/artists.json')
     for artist_link in artist_links:
         song_links = fetch_songs_for_artist(artist_link)
         for song_link in song_links:
             info = fetch_song_info(song_link)
             _insert_all(info)
-    
+    '''
+    elapsed_time = time.time() - start_time
+    print "Finished in "+str(elapsed_time)+" seconds" 
     #print fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
     #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
     #print fetch_song_info('http://genius.com/A-for-jer-lyrics')
