@@ -18,6 +18,7 @@ def fetch_artists(path=None):
         pass
 
     alpha = list(string.ascii_lowercase)
+    alpha = ['z']
     links = []
     count = 0
 
@@ -214,8 +215,6 @@ def save(data, path):
 def load(path):
     with open(path, 'r') as json_data:
         return json.load(json_data)
-        
-
 
 def main():
     start_time = time.time()
@@ -229,21 +228,26 @@ def main():
     'http://genius.com/Eminem-guilty-conscience-lyrics',
     'http://genius.com/Tyler-the-creator-assmilk-lyrics'
     ]
-    _insert_all(fetch_song_info(samples[1]))
-    print samples[0]
+
+    #_insert_all(fetch_song_info(samples[1]))
     #for track in samples:
     #    _insert_all(fetch_song_info(track))
+    path = 'res/artists.json'
 
-    '''
-    artist_links = fetch_artists('res/artists.json')
-    for artist_link in artist_links:
+    artist_links = dict(map(lambda link: (link, False), fetch_artists(path)))
+    for artist_link in artist_links.keys():
+        if artist_links[artist_link] is True:
+            print 'Passing: ',artist_link
+            pass
         song_links = fetch_songs_for_artist(artist_link)
         for song_link in song_links:
             info = fetch_song_info(song_link)
             _insert_all(info)
-    '''
+        artist_links[artist_link] = True
+        save(artist_links, path)
+        
     elapsed_time = time.time() - start_time
-    print "Finished in "+str(elapsed_time)+" seconds" 
+    print "\nFinished in "+str(elapsed_time)+" seconds" 
     #print fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
     #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
     #print fetch_song_info('http://genius.com/A-for-jer-lyrics')
