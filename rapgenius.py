@@ -18,7 +18,7 @@ def fetch_artists(path=None):
         pass
 
     alpha = list(string.ascii_lowercase)
-    alpha = ['z']
+
     links = []
     count = 0
 
