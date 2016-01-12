@@ -216,6 +216,10 @@ def load(path):
     with open(path, 'r') as json_data:
         return json.load(json_data)
 
+def backoff():
+    for i in range(0,3601,400):
+        yield i
+
 def main():
     start_time = time.time()
 
@@ -233,7 +237,31 @@ def main():
     #for track in samples:
     #    _insert_all(fetch_song_info(track))
     path = 'res/artists.json'
+    tries = 1
 
+    artist_links = dict(map(lambda link: (link, False), fetch_artists(path)))
+
+    #while True:
+    for i in backoff():
+        try:
+            for artist_link in artist_links.keys():
+                if artist_links[artist_link] is True:
+                    print 'Passing: ',artist_link
+                    pass
+                song_links = fetch_songs_for_artist(artist_link)
+                for song_link in song_links:
+                    info = fetch_song_info(song_link)
+                    _insert_all(info)
+                artist_links[artist_link] = True
+                save(artist_links, path)
+            break
+            pass
+        except:
+            print "Exponential backoff: Waiting",i,"seconds before retrying"
+            time.sleep(i)
+            tries += 1
+            pass
+    '''
     artist_links = dict(map(lambda link: (link, False), fetch_artists(path)))
     for artist_link in artist_links.keys():
         if artist_links[artist_link] is True:
@@ -245,9 +273,10 @@ def main():
             _insert_all(info)
         artist_links[artist_link] = True
         save(artist_links, path)
-        
+    ''' 
     elapsed_time = time.time() - start_time
     print "\nFinished in "+str(elapsed_time)+" seconds" 
+    print "Attempts:",tries
     #print fetch_songs_for_artist('http://genius.com/artists/Toni-braxton')
     #print fetch_song_info('http://genius.com/Toni-braxton-youve-been-wrong-lyrics')
     #print fetch_song_info('http://genius.com/A-for-jer-lyrics')

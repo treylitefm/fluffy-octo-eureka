@@ -38,11 +38,10 @@ class Model:
                 ');'
 
         query = query.encode('utf-8')
-        print query
-        return 'placeholder'
-        #id = str(self.db.execute(query).lastrowid)
-        #self.db.commit()
-        #return id
+        #print query
+        id = str(self.db.execute(query).lastrowid)
+        self.db.commit()
+        return id
     '''
     def select(self, table, limit=None, **kwargs):
         return 'not yet implemented'
