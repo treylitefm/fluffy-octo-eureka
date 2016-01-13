@@ -1,5 +1,6 @@
 from lxml import html
 import requests
+import requesocks
 import string
 import json
 from re import search
@@ -26,7 +27,8 @@ def fetch_artists(path=None):
         i = 1
         while True:
             full_url = url+'/artists-index/'+letter+'/all' + ('?page='+_to_u_string(i) if i > 1 else '')
-            page = requests.get(full_url)
+            #page = requests.get(full_url)
+            page = session.get(full_url)
             tree = html.fromstring(page.content)
             results = tree.xpath('//*[@class="artists_index_list"]//a/@href')
             if results:
@@ -46,7 +48,8 @@ def fetch_songs_for_artist(link, path=None):
 
     artist_name = link.split('/')[-1]
 
-    page = requests.get(link)
+    #page = requests.get(link)
+    page = session.get(link)
     tree = html.fromstring(page.content) 
 
     match = tree.xpath('//form[contains(@id, edit_artist_)]/@id');
@@ -60,7 +63,8 @@ def fetch_songs_for_artist(link, path=None):
     count = 1
     while True:
         print url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true', count
-        page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
+        #page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
+        page = session.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
         tree = html.fromstring(page.content)
         results = tree.xpath('//a[contains(@class,"song_name")]/@href');
         if results:
@@ -78,7 +82,8 @@ def fetch_song_info(link):
     use artists and features to distribute verses
     '''
     print 'Genius Link:', link
-    page = requests.get(link)
+    #page = requests.get(link)
+    page = session.get(link)
     tree = html.fromstring(page.content)
 
     artists = tree.xpath('//*[contains(@class, "text_artist") or contains(@class, "featured_artists")]/a/text()')
@@ -220,8 +225,20 @@ def backoff():
     for i in range(0,3601,400):
         yield i
 
+def check_tables_exist(tables):
+    m = Model('genius.db')
+
+    for table in tables:
+        if not m.table_exists(table):
+            raise IOError("Table does not exist: "+table)
+
 def main():
     start_time = time.time()
+    check_tables_exist(['songs', 'artists', 'producers', 'writers', 'lyrics']) 
+
+    global session
+    session = requesocks.session()
+    session.proxies = {'http': 'socks5://localhost:9050', 'https': 'socks5://localhost:9050'}
 
     global url
     url = 'http://genius.com'
@@ -261,6 +278,7 @@ def main():
             time.sleep(i)
             tries += 1
             pass
+    
     '''
     artist_links = dict(map(lambda link: (link, False), fetch_artists(path)))
     for artist_link in artist_links.keys():

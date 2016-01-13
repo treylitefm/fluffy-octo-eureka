@@ -19,7 +19,7 @@ class Model:
         where_conditions = ''
         
         for key,value in kwargs.iteritems():
-            print key,value
+            #print key,value
             where_conditions += key + '=' + '\'' + value + '\' AND '
 
         where_conditions = where_conditions[:where_conditions.rfind('\'')+1]
@@ -51,3 +51,8 @@ class Model:
 
         query += ' limit '+limit+';' if limit else ';'
    '''
+
+    def table_exists(self, table):
+        if self.db.execute("SELECT count(*) FROM "+table+";"):
+            return True
+        return None
