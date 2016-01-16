@@ -1,6 +1,6 @@
 from lxml import html
 import requests
-import requesocks
+# import requesocks TODO: FIGURE OUT WHY TOR REQUESTS RETURN 403'S!!!
 import string
 import json
 from re import search
@@ -27,8 +27,8 @@ def fetch_artists(path=None):
         i = 1
         while True:
             full_url = url+'/artists-index/'+letter+'/all' + ('?page='+_to_u_string(i) if i > 1 else '')
-            #page = requests.get(full_url)
-            page = session.get(full_url)
+            page = requests.get(full_url)
+            #page = session.get(full_url)
             tree = html.fromstring(page.content)
             results = tree.xpath('//*[@class="artists_index_list"]//a/@href')
             if results:
@@ -48,8 +48,8 @@ def fetch_songs_for_artist(link, path=None):
 
     artist_name = link.split('/')[-1]
 
-    #page = requests.get(link)
-    page = session.get(link)
+    page = requests.get(link)
+    #page = session.get(link)
     tree = html.fromstring(page.content) 
 
     match = tree.xpath('//form[contains(@id, edit_artist_)]/@id');
@@ -63,8 +63,8 @@ def fetch_songs_for_artist(link, path=None):
     count = 1
     while True:
         print url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true', count
-        #page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
-        page = session.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
+        page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
+        #page = session.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
         tree = html.fromstring(page.content)
         results = tree.xpath('//a[contains(@class,"song_name")]/@href');
         if results:
@@ -82,8 +82,8 @@ def fetch_song_info(link):
     use artists and features to distribute verses
     '''
     print 'Genius Link:', link
-    #page = requests.get(link)
-    page = session.get(link)
+    page = requests.get(link)
+    #page = session.get(link)
     tree = html.fromstring(page.content)
 
     artists = tree.xpath('//*[contains(@class, "text_artist") or contains(@class, "featured_artists")]/a/text()')
@@ -222,7 +222,7 @@ def load(path):
         return json.load(json_data)
 
 def backoff():
-    for i in range(0,3601,400):
+    for i in range(0,8001,400):
         yield i
 
 def check_tables_exist(tables):
@@ -236,12 +236,15 @@ def main():
     start_time = time.time()
     check_tables_exist(['songs', 'artists', 'producers', 'writers', 'lyrics']) 
 
+    '''
     global session
     session = requesocks.session()
     session.proxies = {'http': 'socks5://localhost:9050', 'https': 'socks5://localhost:9050'}
+    '''
 
     global url
     url = 'http://genius.com'
+    url_last_10 = url[-10:]
     samples = [
     'http://genius.com/Odd-future-oldie-lyrics',
     'http://genius.com/Chaka-khan-through-the-fire-lyrics',
@@ -267,6 +270,7 @@ def main():
                     pass
                 song_links = fetch_songs_for_artist(artist_link)
                 for song_link in song_links:
+                    song_link = song_link.replace(url_last_10, url_last_10+'/mecha')
                     info = fetch_song_info(song_link)
                     _insert_all(info)
                 artist_links[artist_link] = True
