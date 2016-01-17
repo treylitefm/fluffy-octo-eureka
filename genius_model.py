@@ -11,7 +11,7 @@ class Model:
 
     def insert(self, table, **kwargs):
         query_keys = '(' + ','.join(kwargs.keys())
-        query_keys += 'created_on,updated_on)'
+        query_keys += ',created_on,updated_on)'
 
         query_values = ','.join(map(lambda val: '\''+val+'\'', kwargs.values()))
         query_values += ',datetime(\'now\',\'-5 hour\'),datetime(\'now\',\'-5 hour\')'
