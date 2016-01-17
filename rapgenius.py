@@ -59,14 +59,14 @@ def fetch_songs_for_artist(link, path=None):
     print 'Artist Id:', numeric_id
 
     links = []
-    i = 2
+    i = 1
     count = 1
     while True:
         print url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true', count
         page = requests.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
         #page = session.get(url+'/artists/songs?for_artist_page='+numeric_id+'id='+artist_name+'&page='+_to_u_string(i)+'&pagination=true')
         tree = html.fromstring(page.content)
-        results = tree.xpath('//a[contains(@class,"song_name")]/@href');
+        results = tree.xpath('//a[contains(@class,"song_name")]//@href');
         if results:
             links += results
         else:
