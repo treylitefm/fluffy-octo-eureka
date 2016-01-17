@@ -188,7 +188,7 @@ def _insert_songs(data, model):
     return model.insert('songs', name=''.join(data['song_name']), views=''.join(data['views']), song_link=''.join(data['song_link']))
 
 def _insert_artists(data, model):
-    print '\n'.join(data['artist_lyrics'].keys())
+    #print '\n'.join(data['artist_lyrics'].keys())
     for artist in data['artist_lyrics'].keys():
         model.insert('artists', name=artist, song_id=data['song_id'])
 
